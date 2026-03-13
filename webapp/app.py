@@ -16,7 +16,7 @@ import pandas as pd
 from flask import Flask, send_from_directory, jsonify, request, render_template, abort
 from flask_cors import CORS
 
-import interpolation
+from .. import interpolation
 
 # Base paths
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))

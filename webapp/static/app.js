@@ -64,6 +64,11 @@ async function uploadMotion(file) {
 }
 
 async function init() {
+  window.addEventListener('error', (ev) => {
+    alert(`JavaScript error: ${ev.message}`);
+    console.error('Captured error', ev.error);
+  });
+
   scene = new THREE.Scene();
   scene.background = new THREE.Color(0x0b0b0b);
 
@@ -195,16 +200,25 @@ async function loadRobotModel(urdfUrl) {
 
   const loader = new URDFLoader();
   return new Promise((resolve, reject) => {
-    loader.load(urdfUrl, (loaded) => {
-      robot = loaded;
-      robot.traverse((obj) => {
-        if (obj.material) obj.material.side = THREE.DoubleSide;
-      });
-      robot.position.set(0, 0, 0);
-      robot.quaternion.set(0, 0, 0, 1);
-      scene.add(robot);
-      resolve();
-    }, undefined, reject);
+    loader.load(
+      urdfUrl,
+      (loaded) => {
+        robot = loaded;
+        robot.traverse((obj) => {
+          if (obj.material) obj.material.side = THREE.DoubleSide;
+        });
+        robot.position.set(0, 0, 0);
+        robot.quaternion.set(0, 0, 0, 1);
+        scene.add(robot);
+        resolve();
+      },
+      undefined,
+      (err) => {
+        console.error('Failed to load URDF', err);
+        alert('Failed to load robot URDF. Check console for details.');
+        reject(err);
+      }
+    );
   });
 }
 
@@ -259,12 +273,12 @@ async function onBuild() {
   await setFieldOrUpload('motionA', motionASelect, motionAUpload);
   await setFieldOrUpload('motionB', motionBSelect, motionBUpload);
   // Additional clip rows
-  document.querySelectorAll('.clip-row').forEach((row, idx) => {
+  for (const row of document.querySelectorAll('.clip-row')) {
     const select = row.querySelector('select');
     const fileInput = row.querySelector('input[type=file]');
-    if (!select || !fileInput) return;
+    if (!select || !fileInput) continue;
     await setFieldOrUpload(`motion`, select, fileInput);
-  });
+  }
   try {
     const res = await fetch('/api/generate_motion', {
       method: 'POST',

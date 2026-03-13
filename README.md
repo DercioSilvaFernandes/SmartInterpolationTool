@@ -14,11 +14,13 @@ A lightweight web app is included to preview/animate CSV motions and to generate
 python -m pip install -r requirements.txt
 ```
 
-2. Start the server:
+2. Start the server (run from the repo root):
 
 ```bash
 python webapp/app.py
 ```
+
+> If you run from inside the `webapp/` directory, it still works (the app auto-adjusts the import path).
 
 3. Open the viewer in your browser:
 
