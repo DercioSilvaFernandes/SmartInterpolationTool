@@ -16,10 +16,9 @@ import pandas as pd
 from flask import Flask, send_from_directory, jsonify, request, render_template, abort
 from flask_cors import CORS
 
-from .. import interpolation
+import interpolation
 
 # Base paths
-ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 DATA_DIR = os.path.join(ROOT_DIR, "lafan1_retargeting_dataset")
 ROBOT_DESC_DIR = os.path.join(DATA_DIR, "robot_description")
 UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "uploads")
