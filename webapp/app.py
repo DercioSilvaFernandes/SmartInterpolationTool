@@ -1,8 +1,15 @@
 import os
 import io
 import json
+import sys
 import uuid
 import xml.etree.ElementTree as ET
+
+# Ensure the repository root is on sys.path so we can import interpolation when running
+# `python webapp/app.py` from inside the webapp folder.
+ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if ROOT_DIR not in sys.path:
+    sys.path.insert(0, ROOT_DIR)
 
 import numpy as np
 import pandas as pd
