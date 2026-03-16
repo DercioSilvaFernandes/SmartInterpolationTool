@@ -6,9 +6,9 @@ This runbook provides the complete, step-by-step procedure to set up, configure,
 
 ## Scope
 
-- **Target Environment**: macOS local development machine with conda
+- **Target Environment**: macOS local development machine or Ubuntu remote instance with conda/system Python
 - **Target Paths**: `/Users/dercio.fernandes/dm-isaac-g1/agents/SmartInterpolationTool`
-- **Expected Outcome**: Fully functional web app with multi-CSV merge, visualization, and interpolation capabilities
+- **Expected Outcome**: Fully functional web app with multi-CSV merge, visualization, interpolation, and browserless GUI validation capabilities
 
 ## Preconditions / Prerequisites
 
@@ -17,7 +17,7 @@ Before starting this runbook:
 - [ ] Git is available in PATH
 - [ ] Python 3.10+ is available via conda
 - [ ] SmartInterpolationTool repository is cloned at `/Users/dercio.fernandes/dm-isaac-g1/agents/SmartInterpolationTool`
-- [ ] Modern web browser installed (Chrome, Firefox, Safari)
+- [ ] Playwright Chromium can be installed on the target machine
 - [ ] Sample motion CSV files available for testing (can be generated or provided)
 
 ## Expected Steady-State Outcome
@@ -26,9 +26,10 @@ After completing this runbook:
 - [ ] Conda environment `smartinterp` exists with all dependencies installed
 - [ ] Flask web server runs without errors on `localhost:5000`
 - [ ] Web UI loads with dark theme, video-editor-like interface
+- [ ] Browserless GUI screenshot is captured and stored under `smartinterp-setup/artifacts/`
 - [ ] CSV upload functionality works through web interface
 - [ ] Multi-CSV merge with interpolation generates smooth motions
-- [ ] 3D visualization renders and plays back motion in browser
+- [ ] 3D visualization renders and plays back in headless Chromium
 - [ ] Stand pose transitions apply correctly
 - [ ] Complete requirements.txt with all pinned versions exists
 - [ ] All features tested and verified working end-to-end
@@ -68,11 +69,22 @@ ls   # Should show: interpolation.py, webapp/, requirements.txt, etc.
 # Install all required packages from requirements.txt
 pip install -r requirements.txt
 
+# Install the headless browser used for GUI verification
+python -m playwright install chromium
+
 # Verify key packages installed
-python -c "import flask; import numpy; import scipy; print('✓ Core packages installed')"
+python -c "import flask; import numpy; import scipy; import playwright; print('✓ Core packages installed')"
 ```
 
 **Expected Output**: `✓ Core packages installed` (no errors)
+
+Ubuntu remote note:
+
+```bash
+python -m playwright install --with-deps chromium
+```
+
+Use the `--with-deps` variant on Ubuntu when the machine does not already have Chromium system dependencies.
 
 ---
 
@@ -185,6 +197,22 @@ curl -s http://localhost:5000 | head -20
 
 **Expected Output**: HTML content from index.html (not error)
 
+### Step 3.1b: Browserless GUI Validation
+
+Run the real GUI in headless Chromium and capture an artifact:
+
+```bash
+python smartinterp-setup/browserless_gui_check.py \
+  --launch-local-server \
+  --output smartinterp-setup/artifacts/local-gui-check.png
+```
+
+**Expected Output**:
+- `GUI validation passed: frame_label=...`
+- `Screenshot written to: .../smartinterp-setup/artifacts/local-gui-check.png`
+
+This is the preferred validation path when the target machine does not expose a browser.
+
 ### Step 3.2: Verify Web UI Assets Load
 
 ```bash
@@ -256,7 +284,45 @@ curl -X POST http://localhost:5000/api/merge \
 
 ## Phase 5: Testing & Validation
 
-### Step 5.1: Manual Web UI Test - Upload CSV
+### Step 5.1: Browserless Web UI Test - Upload CSV and Render
+
+The browserless check exercises the same UI and should pass before considering the GUI working:
+
+```bash
+python smartinterp-setup/browserless_gui_check.py \
+  --base-url http://127.0.0.1:5000 \
+  --output smartinterp-setup/artifacts/browserless-gui-check.png
+```
+
+Review the generated PNG to confirm:
+- the dark-themed layout rendered correctly
+- the canvas is present
+- interpolation playback controls activated after generation
+
+### Step 5.2: Remote Instance Validation
+
+If a remote machine is provided, run the same flow there instead of requiring an interactive browser session.
+
+Example commands from a local control machine:
+
+```bash
+scp -r /Users/dercio.fernandes/dm-isaac-g1/agents/SmartInterpolationTool admin@REMOTE_HOST:~/
+
+ssh admin@REMOTE_HOST '
+  cd ~/SmartInterpolationTool &&
+  python3 -m pip install -r requirements.txt &&
+  python3 -m pip install playwright &&
+  python3 -m playwright install --with-deps chromium &&
+  python3 smartinterp-setup/browserless_gui_check.py \
+    --launch-local-server \
+    --output smartinterp-setup/artifacts/remote-gui-check.png
+'
+
+scp admin@REMOTE_HOST:~/SmartInterpolationTool/smartinterp-setup/artifacts/remote-gui-check.png \
+  /tmp/remote-gui-check.png
+```
+
+Do not store passwords in repo files. Inject credentials at execution time only.
 
 1. Open browser: `http://localhost:5000`
 2. Click "Upload CSV" button

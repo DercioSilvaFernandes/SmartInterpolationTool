@@ -61,6 +61,15 @@ def _get_robot_config(robot_type: str):
     return urdf_path, data_dir
 
 
+def _available_robot_types():
+    available = []
+    for robot_type in ROBOT_CONFIGS:
+        urdf_path, data_dir = _get_robot_config(robot_type)
+        if os.path.isfile(urdf_path) and os.path.isdir(data_dir):
+            available.append(robot_type)
+    return sorted(available)
+
+
 def _list_csv_files(data_dir):
     if not os.path.isdir(data_dir):
         return []
@@ -142,6 +151,33 @@ def _get_joint_limits(robot_type: str):
     return np.array(lower, dtype=np.float32), np.array(upper, dtype=np.float32)
 
 
+def _infer_csv_dof_size(robot_type: str):
+    try:
+        _, data_dir = _get_robot_config(robot_type)
+    except KeyError:
+        return None
+
+    for filename in _list_csv_files(data_dir):
+        path = os.path.join(data_dir, filename)
+        try:
+            return int(pd.read_csv(path, header=None, nrows=1).shape[1])
+        except Exception:
+            continue
+    return None
+
+
+def _align_joint_limits(lower_limits, upper_limits, joint_count: int):
+    if len(lower_limits) == joint_count and len(upper_limits) == joint_count:
+        return lower_limits, upper_limits
+
+    lower = np.full(joint_count, -np.inf, dtype=np.float32)
+    upper = np.full(joint_count, np.inf, dtype=np.float32)
+    usable = min(joint_count, len(lower_limits), len(upper_limits))
+    lower[:usable] = lower_limits[:usable]
+    upper[:usable] = upper_limits[:usable]
+    return lower, upper
+
+
 @app.route("/")
 def index():
     return render_template("index.html")
@@ -163,7 +199,7 @@ def motion_file(robot_type, filename):
 
 @app.route("/api/robot_types")
 def api_robot_types():
-    return jsonify(sorted(list(ROBOT_CONFIGS.keys())))
+    return jsonify(_available_robot_types())
 
 
 @app.route("/api/list_motions")
@@ -204,15 +240,18 @@ def api_robot_config():
         urdf_path, _ = _get_robot_config(robot_type)
     except KeyError:
         return jsonify({"error": "invalid robot_type"}), 400
+    if not os.path.isfile(urdf_path):
+        return jsonify({"error": f"missing URDF for robot_type '{robot_type}'"}), 404
 
     joint_names = _get_joint_order(robot_type)
     lower_limits, upper_limits = _get_joint_limits(robot_type)
+    csv_dof_size = _infer_csv_dof_size(robot_type) or (7 + len(joint_names))
     urdf_url = f"/robot_description/{ROBOT_CONFIGS[robot_type]['urdf']}"
     return jsonify({
         "robot_type": robot_type,
         "urdf_url": urdf_url,
         "joint_names": joint_names,
-        "csv_dof_size": 7 + len(joint_names),
+        "csv_dof_size": csv_dof_size,
         "joint_limits": {
             "lower": lower_limits.tolist(),
             "upper": upper_limits.tolist(),
@@ -294,7 +333,8 @@ def api_generate_motion():
     if stand is None or not motions:
         return jsonify({"error": "stand and at least one motion are required"}), 400
 
-    lower_limits, upper_limits = _get_joint_limits(robot_type)
+    joint_count = max(0, stand.shape[1] - 7)
+    lower_limits, upper_limits = _align_joint_limits(*_get_joint_limits(robot_type), joint_count)
 
     final = interpolation.build_motion(
         stand=stand,

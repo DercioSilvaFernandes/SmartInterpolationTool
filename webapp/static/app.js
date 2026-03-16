@@ -1,6 +1,6 @@
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.162.0/build/three.module.js';
-import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.162.0/examples/jsm/controls/OrbitControls.js';
-import { URDFLoader } from 'https://cdn.jsdelivr.net/npm/urdf-loader@1.1.0/dist/urdf-loader.module.js';
+import * as THREE from 'https://esm.sh/three@0.162.0';
+import { OrbitControls } from 'https://esm.sh/three@0.162.0/examples/jsm/controls/OrbitControls.js';
+import URDFLoader from 'https://esm.sh/urdf-loader@0.12.6?deps=three@0.162.0';
 
 const robotTypeEl = document.getElementById('robotType');
 const standSelect = document.getElementById('standSelect');
@@ -297,6 +297,7 @@ async function onBuild() {
     lastTime = performance.now();
     downloadButton.disabled = false;
     playPauseButton.disabled = false;
+    recordButton.disabled = false;
     playPauseButton.textContent = 'Play';
   } catch (err) {
     console.error(err);
@@ -377,6 +378,18 @@ function onFrameScrub() {
   playPauseButton.textContent = 'Play';
   const idx = Math.max(0, Math.min(frames.length - 1, parseInt(frameScrub.value, 10) - 1));
   applyFrame(idx);
+}
+
+function onDownload() {
+  if (!frames.length) return;
+  const csv = frames.map((frame) => frame.join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'smartinterp_motion.csv';
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 function toggleRecording() {

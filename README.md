@@ -28,6 +28,25 @@ python webapp/app.py
 http://localhost:5000
 ```
 
+### Browserless GUI Check
+
+If the machine cannot open a browser window, validate the real UI with headless Chromium instead:
+
+```bash
+python -m playwright install chromium
+python smartinterp-setup/browserless_gui_check.py \
+  --launch-local-server \
+  --output smartinterp-setup/artifacts/local-gui-check.png
+```
+
+On Ubuntu, prefer:
+
+```bash
+python -m playwright install --with-deps chromium
+```
+
+The script loads the Flask app, builds a motion, enables playback, and saves a screenshot artifact you can inspect later.
+
 ### What it does
 
 - Loads URDFs from `lafan1_retargeting_dataset/robot_description`

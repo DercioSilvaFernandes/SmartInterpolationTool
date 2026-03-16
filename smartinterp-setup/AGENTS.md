@@ -12,12 +12,14 @@ When a remediation log is required, keep it updated throughout execution, not on
 This task requires:
 - **Python**: 3.8+ (verified with conda env)
 - **conda environment**: Isolated Python environment for safety and reproducibility
-- **Local testing**: All features tested on local macOS laptop before deployment
+- **Headless GUI validation**: Use Playwright + Chromium to verify the web UI without an interactive browser
+- **Remote target support**: Browserless Ubuntu instances are valid test targets when the operator provides SSH access
 
 Pre-requisites:
 - Conda installed and available in PATH
 - Git access to clone lafan1 repository if needed
-- Modern web browser with WebGL support (for visualization)
+- Chromium installed through Playwright (`python -m playwright install chromium` locally, `python -m playwright install --with-deps chromium` on Ubuntu)
+- Interactive browser access is optional; a browserless GUI screenshot is the required evidence artifact
 
 Creation of conda environment:
 ```bash
@@ -25,6 +27,7 @@ conda create -n smartinterp python=3.10
 conda activate smartinterp
 cd /Users/dercio.fernandes/dm-isaac-g1/agents/SmartInterpolationTool
 pip install -r requirements.txt
+python -m playwright install chromium
 ```
 
 ## Core Operating Principles
@@ -36,6 +39,8 @@ pip install -r requirements.txt
 - **Keep changes scoped to the task**: Focus on CSV merge, interpolation, and web visualization.
 - **Ensure reproducibility**: Complete requirements.txt with pinned versions.
 - **Documentation updates**: Keep inline code comments and remediation logs updated.
+- **Default to browserless GUI checks**: Validate the Flask UI with `smartinterp-setup/browserless_gui_check.py` and keep the generated screenshot path in the log.
+- **Use remote instances when supplied**: If the operator provides an instance, run the same validation flow there over SSH. Never write plaintext passwords into repo files.
 
 ## Acceptance Criteria Checklist
 
@@ -44,12 +49,13 @@ Task is complete when ALL of the following are verified working:
 - [ ] Multiple CSV merge with intelligent interpolation
 - [ ] Web app dark theme UI (modern, sleek, video-editor-like)
 - [ ] Live interpolation visualization with easing controls
+- [ ] Browserless GUI validation screenshot captured from the target machine
 - [ ] CSV upload and caching
 - [ ] Stand pose support
 - [ ] 2 CSVs successfully merged with stand pose in between
 - [ ] Physical robot joint limit validation
 - [ ] Complete requirements.txt with pinned versions
-- [ ] All code tested on local laptop with conda env
+- [ ] Local and/or remote target tested with conda env and headless GUI validation
 
 ## Task File Rules
 
@@ -70,4 +76,5 @@ Update `current_task/SMARTINTERP-SETUP_REMEDIATION_LOG.md` after:
 - Running successful tests
 - Modifying web app frontend/backend
 - Installing dependencies
+- Running browserless GUI validation or remote-instance checks
 - Encountering and fixing any issues

@@ -10,6 +10,60 @@ This is the active, task-specific log for current work on SmartInterpolationTool
 
 ## Implementation Phase Log
 
+### Session 4: Browserless GUI Validation and Remote Instance Enablement
+
+**Date**: 2026-03-16
+
+#### Step 1: Added headless GUI validation workflow
+
+**Files Changed**:
+- `SmartInterpolationTool/smartinterp-setup/browserless_gui_check.py`
+- `SmartInterpolationTool/requirements.txt`
+- `SmartInterpolationTool/README.md`
+- `SmartInterpolationTool/smartinterp-setup/AGENTS.md`
+- `SmartInterpolationTool/smartinterp-setup/SMARTINTERP-SETUP_INTEGRATION_ENABLEMENT.md`
+- `SmartInterpolationTool/smartinterp-setup/SMARTINTERP-SETUP_WORKING_RUNBOOK.md`
+- `SmartInterpolationTool/smartinterp-setup/artifacts/.gitignore`
+
+**Status**: ✓ Complete
+
+**Details**:
+- Added a Playwright-based browserless checker that launches the real Flask UI, builds a motion, starts playback, and saves a screenshot artifact
+- Updated the setup documentation so browserless validation is now the standard path on machines without interactive browser access
+- Added Playwright to `requirements.txt` for reproducible installation
+- Added artifact ignore rules so repeated GUI captures do not pollute the git worktree
+
+#### Step 2: Fixed GUI startup and motion-generation regressions discovered by headless validation
+
+**Files Changed**:
+- `SmartInterpolationTool/webapp/static/app.js`
+- `SmartInterpolationTool/webapp/app.py`
+
+**Status**: ✓ Complete
+
+**Details**:
+- Replaced the broken `urdf-loader` CDN import with a working ESM source
+- Filtered advertised robot types to only those with available URDF/data assets so the UI no longer crashes on missing `g1_23dof` assets
+- Added a missing CSV download handler and re-enabled the record button after motion generation
+- Normalized backend joint-limit arrays to CSV joint-vector length to avoid `ValueError` during `generate_motion`
+- Derived `csv_dof_size` from real CSV samples when available
+
+#### Step 3: Validated locally and on the supplied remote instance
+
+**Artifacts**:
+- Local screenshot: `SmartInterpolationTool/smartinterp-setup/artifacts/local-gui-check.png`
+- Remote screenshot: `/home/admin/smartinterp-remote/SmartInterpolationTool/smartinterp-setup/artifacts/remote-gui-check.png`
+
+**Status**: ✓ Complete
+
+**Details**:
+- Local validation command passed:
+  - `conda run -n smartinterp python smartinterp-setup/browserless_gui_check.py --launch-local-server --output smartinterp-setup/artifacts/local-gui-check.png`
+- Remote validation command passed on `108.130.118.54` using the operator-provided credentials:
+  - `python smartinterp-setup/browserless_gui_check.py --launch-local-server --output smartinterp-setup/artifacts/remote-gui-check.png`
+- Confirmed the GUI renders, generates motion frames, and enters playback state in both environments
+- Confirmed the remote instance can run the browserless flow without needing an interactive browser
+
 ### Session 3: Automation Documentation
 
 **Date**: 2026-03-13
@@ -439,4 +493,3 @@ open http://localhost:5000
 ## ✓ SIGN-OFF: TASK COMPLETE
 
 All acceptance criteria met. System tested and ready for deployment.
-
