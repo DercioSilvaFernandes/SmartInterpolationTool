@@ -64,6 +64,42 @@ This is the active, task-specific log for current work on SmartInterpolationTool
 - Confirmed the GUI renders, generates motion frames, and enters playback state in both environments
 - Confirmed the remote instance can run the browserless flow without needing an interactive browser
 
+### Session 5: Headless Rerun Visualizer for Remote Instances
+
+**Date**: 2026-03-16
+
+#### Step 1: Reworked `rerun_visualize.py` for headless artifact output
+
+**Files Changed**:
+- `SmartInterpolationTool/rerun_visualize.py`
+- `SmartInterpolationTool/README.md`
+
+**Status**: ✓ Complete
+
+**Details**:
+- Changed `rerun_visualize.py` from viewer-first behavior to headless artifact generation by default
+- The script now writes a `.rrd` recording and a JSON summary under `smartinterp-setup/artifacts/rerun/`
+- Added optional `--spawn-viewer` support for desktop sessions, while keeping remote/headless runs non-interactive
+- Logged root trajectory, current base position, root pose scalar traces, and joint scalar traces into the Rerun recording
+
+#### Step 2: Tested `rerun_visualize.py` on the supplied remote instance
+
+**Remote Target**:
+- `108.130.118.54` (`admin`)
+
+**Status**: ✓ Complete
+
+**Details**:
+- Uploaded the updated `rerun_visualize.py` to `~/smartinterp-remote/SmartInterpolationTool`
+- Executed in `~/smartinterp-venv` on the remote host:
+  - `python rerun_visualize.py --motion1 stand_pose --motion2 motion_walk --interpolation-steps 24 --hold-frames 6 --output-rrd smartinterp-setup/artifacts/rerun/remote_final.rrd --summary-json smartinterp-setup/artifacts/rerun/remote_final_summary.json`
+- Verified output files exist:
+  - `/home/admin/smartinterp-remote/SmartInterpolationTool/smartinterp-setup/artifacts/rerun/remote_final.rrd`
+  - `/home/admin/smartinterp-remote/SmartInterpolationTool/smartinterp-setup/artifacts/rerun/remote_final_summary.json`
+- Verified successful build details from the remote run:
+  - 90 frames generated
+  - headless execution completed without browser/UI requirements
+
 ### Session 3: Automation Documentation
 
 **Date**: 2026-03-13

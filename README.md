@@ -47,6 +47,31 @@ python -m playwright install --with-deps chromium
 
 The script loads the Flask app, builds a motion, enables playback, and saves a screenshot artifact you can inspect later.
 
+### Non-Web Rerun Visualizer
+
+If you want a non-web artifact instead of the Flask UI, use:
+
+```bash
+python rerun_visualize.py \
+  --motion1 stand_pose \
+  --motion2 motion_walk
+```
+
+By default this writes:
+
+- `smartinterp-setup/artifacts/rerun/smartinterp_visualization.rrd`
+- `smartinterp-setup/artifacts/rerun/smartinterp_visualization_summary.json`
+
+On a remote instance, run the same command inside the prepared virtualenv:
+
+```bash
+source ~/smartinterp-venv/bin/activate
+cd ~/smartinterp-remote/SmartInterpolationTool
+python rerun_visualize.py --motion1 stand_pose --motion2 motion_walk
+```
+
+Use `--spawn-viewer` only on machines with a desktop session. On headless machines, keep the default behavior and copy the `.rrd` file elsewhere if you want to inspect it interactively.
+
 ### What it does
 
 - Loads URDFs from `lafan1_retargeting_dataset/robot_description`
